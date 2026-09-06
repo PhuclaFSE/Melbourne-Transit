@@ -1,0 +1,4 @@
+.env
+gtfs/
+__pycache__/
+*.pyc
