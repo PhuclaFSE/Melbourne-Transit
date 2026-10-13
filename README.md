@@ -1,83 +1,43 @@
 # MelbourneTransit
 
-MelbourneTransit is a full-stack public transport web application for exploring Melbourne's train, tram, and bus network.
+MelbourneTransit is a full-stack public transport project for exploring Melbourne's train, tram, and bus network.
 
-The project uses Victorian public transport GTFS data, stores it in PostgreSQL/PostGIS, exposes the data through a Node.js/Express REST API, and displays transport information through a React frontend.
+The project is being built around Victoria's GTFS public transport data, with PostgreSQL/PostGIS as the data layer. The long-term goal is to develop the system from raw transport data through to a web application with route exploration, mapping, and eventually an independent journey-planning engine.
 
-The long-term goal is to build a complete journey-planning system with my own routing implementation instead of relying on external journey-planning APIs.
+> **Project status:** Early development. The current repository focuses on the database and data setup. Backend and frontend components will be added progressively.
 
-## Features
+## Current Progress
 
-### Current
+Currently implemented:
 
-- Browse Melbourne train, tram, and bus routes
-- Filter routes by transport mode
-- Search and retrieve transport data through a REST API
-- Store GTFS transport data in PostgreSQL
-- Process GTFS datasets using a Python ETL pipeline
-- Separate backend logic into routes, controllers, and services
-- Display transport information through a React frontend
-- Support geographic transport data with PostGIS
+- PostgreSQL database environment
+- PostGIS support for future geospatial queries
+- Docker-based local database setup
+- Initial public transport data/database structure
+- Local development configuration through Docker Compose
 
-### Planned
+The current Docker environment runs:
 
-- Route detail pages
-- Stop search and stop detail pages
-- Interactive route maps using Leaflet
-- Visualisation of route shapes and stops
-- Journey planning between two locations
-- Custom RAPTOR-based public transport routing algorithm
-- Free Tram Zone detection and alerts
-- Improved service and disruption information where suitable data is available
+- PostgreSQL 17
+- PostGIS 3.5
+- Database: `meltransit`
+- Local PostgreSQL port: `5432`
 
-## Tech Stack
+## Planned Architecture
 
-### Frontend
-
-- React
-- JavaScript
-- Tailwind CSS
-- shadcn/ui
-- Leaflet
-
-### Backend
-
-- Node.js
-- Express.js
-- REST APIs
-
-### Database
-
-- PostgreSQL
-- PostGIS
-
-### Data Processing
-
-- Python
-- psycopg2
-- GTFS
-
-### Development Tools
-
-- Git
-- GitHub
-- Docker
-
-## Architecture
-
-MelbourneTransit follows a simple full-stack architecture:
+MelbourneTransit is planned as an end-to-end transport system:
 
 ```text
 GTFS Data
     |
     v
-Python ETL Pipeline
+Data Processing / ETL
     |
     v
 PostgreSQL + PostGIS
     |
     v
-Node.js / Express API
+Node.js + Express REST API
     |
     v
 React Frontend
@@ -86,306 +46,204 @@ React Frontend
 Leaflet Map
 ```
 
-The backend is separated into layers to keep the code easier to maintain:
+The project is being developed incrementally, starting from the transport data layer before building the API and user interface.
 
-```text
-Route
-  |
-  v
-Controller
-  |
-  v
-Service
-  |
-  v
-PostgreSQL
-```
+## Tech Stack
 
-For example, a request for train routes follows this flow:
+### Currently Used
 
-```text
-GET /api/routes?type=train
-        |
-        v
-Express Router
-        |
-        v
-Route Controller
-        |
-        v
-Route Service
-        |
-        v
-PostgreSQL
-```
+- PostgreSQL
+- PostGIS
+- Docker
+- Docker Compose
+- GTFS transport data
+
+### Planned
+
+- Python — GTFS data processing and loading
+- Node.js
+- Express.js
+- REST APIs
+- React
+- JavaScript
+- Tailwind CSS
+- Leaflet
 
 ## Project Structure
 
+Current repository structure:
+
 ```text
-MelbourneTransit/
-│
-├── backend/
-│   ├── controllers/
-│   ├── routes/
-│   ├── services/
-│   ├── db.js
-│   └── server.js
-│
-├── frontend/
-│   ├── src/
-│   │   ├── Components/
-│   │   ├── pages/
-│   │   └── assets/
-│   └── package.json
-│
-├── database/
-│   └── SQL scripts
+Melbourne-Transit/
 │
 ├── data/
-│   ├── Train/
-│   ├── Tram/
-│   └── Bus/
+│   └── database/
 │
-├── create_db.py
-├── load_gtfs.py
+├── .gitignore
+├── docker-compose.yml
 └── README.md
 ```
 
-> Raw GTFS datasets are not committed to this repository.
+The structure will expand as the backend and frontend are added.
 
-## GTFS Data
+## Database Setup
 
-The application currently works with the main GTFS tables required for route and timetable information:
-
-- `routes`
-- `stops`
-- `trips`
-- `stop_times`
-- `calendar`
-- `calendar_dates`
-
-The source datasets are separated into train, tram, and bus data before being loaded into PostgreSQL.
-
-The ETL process handles the conversion from raw GTFS text files into relational database tables that can be queried by the backend.
-
-## API
-
-### Get Routes
-
-```http
-GET /api/routes?type=train
-```
-
-Supported transport types:
-
-```text
-train
-tram
-bus
-```
-
-Example:
-
-```http
-GET /api/routes?type=tram
-```
-
-The API validates the requested transport mode before querying the database.
-
-Example response:
-
-```json
-[
-  {
-    "route_id": "...",
-    "route_short_name": "86",
-    "route_long_name": "...",
-    "transport_type": "tram"
-  }
-]
-```
-
-## Database Querying
-
-Database queries use parameterised SQL where user-controlled values are involved.
-
-Example:
-
-```sql
-SELECT *
-FROM melbournetransit.routes
-WHERE transport_type = $1;
-```
-
-Different transport modes require different sorting behaviour.
-
-For example:
-
-- train routes are sorted by their route name
-- tram routes are sorted numerically
-- bus routes must support both numeric and named route identifiers
-
-Replacement bus entries contained in the GTFS data are filtered from the normal train route list.
-
-## Journey Planning
-
-A major future part of MelbourneTransit is the journey-planning engine.
-
-Instead of using Google Maps or another external journey-planning API, the project is intended to calculate journeys directly from GTFS data.
-
-The planned routing pipeline is:
-
-```text
-Origin
-   |
-   v
-Nearby Stops
-   |
-   v
-RAPTOR Routing Algorithm
-   |
-   v
-Candidate Journeys
-   |
-   v
-Journey Details
-   |
-   v
-Frontend Map
-```
-
-RAPTOR is designed specifically for public transport routing and works around rounds of route scanning rather than traditional road-network shortest-path traversal.
-
-This part of the project is currently under development.
-
-## Running the Project
+The development database runs inside Docker using PostgreSQL with PostGIS.
 
 ### Requirements
 
 Install:
 
-- Node.js
-- npm
-- Python
-- PostgreSQL
-- PostGIS
+- Docker
+- Docker Compose
 
-### 1. Clone the repository
+### Start the Database
 
-```bash
-git clone <repository-url>
-cd MelbourneTransit
-```
-
-### 2. Configure the database
-
-Create a PostgreSQL database and enable PostGIS.
-
-```sql
-CREATE EXTENSION postgis;
-```
-
-Create a local `.env` file for backend configuration.
-
-Example:
-
-```env
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=melbournetransit
-DB_USER=postgres
-DB_PASSWORD=your_password
-PORT=3000
-```
-
-Do not commit `.env` files or database credentials to GitHub.
-
-### 3. Load GTFS data
-
-Place the required GTFS datasets inside the local `data/` directory.
-
-Then run the database setup and ETL scripts.
+Clone the repository:
 
 ```bash
-python create_db.py
-python load_gtfs.py
+git clone https://github.com/PhuclaFSE/Melbourne-Transit.git
+cd Melbourne-Transit
 ```
 
-### 4. Start the backend
+Start PostgreSQL:
 
 ```bash
-cd backend
-npm install
-npm run dev
+docker compose up -d
 ```
 
-The API runs locally on:
+The database will be available locally on:
 
 ```text
-http://localhost:3000
+localhost:5432
 ```
 
-### 5. Start the frontend
+Current development configuration:
 
-Open another terminal:
+```text
+Database: meltransit
+User: postgres
+Port: 5432
+```
+
+Database data is stored using a Docker volume so it can persist between container restarts.
+
+To stop the container:
 
 ```bash
-cd frontend
-npm install
-npm run dev
+docker compose down
 ```
 
-Open the local URL shown by the frontend development server.
+## GTFS Data
+
+MelbourneTransit is designed around General Transit Feed Specification (GTFS) data for Victoria's public transport network.
+
+The project will work with core GTFS datasets such as:
+
+```text
+routes
+stops
+trips
+stop_times
+calendar
+calendar_dates
+```
+
+These datasets provide the foundation for representing transport routes, services, stops, trips, and timetables.
+
+Raw GTFS data should remain outside version control where appropriate rather than being committed directly to the repository.
 
 ## Development Roadmap
 
-```text
-[x] GTFS data ingestion
-[x] PostgreSQL database
-[x] Basic route API
-[x] Train, tram and bus filtering
-[x] React route rendering
+### Phase 1 — Data Layer
 
-[ ] Route detail API
-[ ] Stop API
-[ ] Route map visualisation
-[ ] Stop markers
-[ ] Route shape rendering
-[ ] Journey search interface
-[ ] RAPTOR routing implementation
-[ ] Journey result visualisation
-[ ] Free Tram Zone detection
-[ ] Dockerised deployment
+- [x] Set up PostgreSQL
+- [x] Enable PostGIS environment
+- [x] Dockerise the development database
+- [ ] Complete GTFS database schema
+- [ ] Build GTFS loading pipeline
+- [ ] Import train data
+- [ ] Import tram data
+- [ ] Import bus data
+- [ ] Validate imported transport data
+
+### Phase 2 — Backend
+
+- [ ] Set up Node.js and Express
+- [ ] Connect backend to PostgreSQL
+- [ ] Build route API
+- [ ] Build stop API
+- [ ] Add route detail endpoints
+- [ ] Add stop and timetable queries
+
+### Phase 3 — Frontend
+
+- [ ] Set up React frontend
+- [ ] Browse train, tram, and bus routes
+- [ ] Search routes and stops
+- [ ] Display route details
+- [ ] Integrate Leaflet maps
+- [ ] Display stops and route shapes
+
+### Phase 4 — Journey Planning
+
+- [ ] Build journey search interface
+- [ ] Implement nearby-stop search
+- [ ] Implement RAPTOR routing algorithm
+- [ ] Support transfers between services
+- [ ] Display journey results on the map
+- [ ] Add Free Tram Zone detection
+
+## Journey Planning
+
+A major future goal of MelbourneTransit is to build the journey-planning logic directly from GTFS data instead of relying on an external journey-planning service.
+
+The planned flow is:
+
+```text
+Origin + Destination
+        |
+        v
+Nearby Stops
+        |
+        v
+RAPTOR Routing
+        |
+        v
+Candidate Journeys
+        |
+        v
+Journey Details
+        |
+        v
+Map Visualisation
 ```
+
+This part of the project will be developed after the core transport database, API, and route visualisation are working reliably.
 
 ## Why I Built This
 
-MelbourneTransit started as a way for me to learn full-stack development by working with a real transport dataset instead of building another small CRUD application.
+I started MelbourneTransit to learn full-stack development using a real dataset and a system that is more complex than a standard CRUD application.
 
-The project gives me a practical environment to work with:
+The project gives me a practical way to work with several areas of software engineering in the same system:
 
+- relational databases
+- spatial data
+- data processing
 - REST API design
-- relational and spatial databases
 - backend architecture
-- data engineering
-- React
+- frontend development
 - mapping
-- transport algorithms
-- algorithm design and optimisation
+- public transport data
+- routing algorithms
 
-As the project grows, I plan to move further into routing algorithms and backend system design while keeping the application usable as a real Melbourne transport tool.
-
-## Data
-
-The project uses public transport GTFS datasets for Victoria.
-
-GTFS data itself is not stored in this repository. Users should obtain the relevant datasets separately and load them locally using the provided data-processing scripts.
+The project will grow gradually from the database layer into a complete transport application, with the journey-planning engine being one of the later and more algorithmically challenging parts.
 
 ## Status
 
 MelbourneTransit is actively under development.
 
-The current focus is building the core route, stop, and map functionality before implementing the journey-planning engine.
+The current focus is building and validating the transport data layer before moving on to the backend API.
 
 ## Author
 
